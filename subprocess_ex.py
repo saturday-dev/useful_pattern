@@ -1,4 +1,4 @@
-#!/miniconda3/envs/py311/bin/python
+#!/home/komodo/miniconda3/envs/py311/bin/python3
 
 import sys
 import os
