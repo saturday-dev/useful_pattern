@@ -1,4 +1,5 @@
 #!/home/komodo/miniconda3/envs/py311/bin/python3
+#-*- coding: utf-8 -*-
 import asyncio
 import importlib
 from typing import Any
