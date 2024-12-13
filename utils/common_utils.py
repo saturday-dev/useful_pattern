@@ -10,25 +10,47 @@ from logging import Logger
 from time import time
 
 def getTimer(func):
+    """_summary_
+        Decorator로 사용하기 위한 시간 측정 함수
+    Args:
+        func (_type_): 함수정보
+    """
     def wrapper(*args, **kwargs):
         start_time = time()
         result = func(*args, **kwargs) # 함수 실행
         end_time = time()
         elapsed_time = end_time - start_time
-        if 'logger' in kwargs.keys() and type(kwargs['logger']) == Logger:
-            logger = kwargs['logger']
-            logger.info(f'함수 {func.__name__} 소요시간은 {elapsed_time:.2f} S 입니다.')
+        if 'logger' in kwargs.keys():
+            logger = checkLogger(logger=kwargs['logger'])
         else:
-            print(f'함수 {func.__name__} 소요시간은 {elapsed_time:.2f} S 입니다.')                
+            logger = checkLogger()
+        logger.info(f'함수 {func.__name__} 소요시간은 {elapsed_time:.2f} S 입니다.')
         return result
     return wrapper
 
 async def async_subprocess(cmd: str):
+    """_summary_
+        Async 모드로 여러 프로세스를 실행할때 사용하는 함수
+    Args:
+        cmd (str): _description_
+
+    Returns:
+        _type_: _description_
+    """
     proc = await asyncio.create_subprocess_shell(cmd=cmd, stderr=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE)
     stdout, stderr = await proc.communicate()
     return stdout.decode().strip(), stderr.decode().strip()
 
-async def async_do_task_and_report(cmd: str, max_process: asyncio.Semaphore = asyncio.Semaphore(value=300)):
+async def async_subprocess_limit_process(cmd: str, max_process: asyncio.Semaphore = asyncio.Semaphore(value=300)):
+    """_summary_
+        동시 수행 하는 프로세스 수를 제한고 싶을때 사용하는 함수
+    Args:
+        cmd (str): _description_
+        max_process (asyncio.Semaphore, optional): _description_. Defaults to asyncio.Semaphore(value=300).
+
+    Returns:
+        _type_: _description_
+    """
     print(f' report : {cmd}')
     async with max_process:
         stdout, stderr = await async_subprocess(cmd=cmd)
@@ -48,7 +70,7 @@ def load_class_func(modulePath, className: str):
     loaded_class = getattr(module, className)
     return loaded_class
 
-def getLogger(logPath: str ='./', loggerName: str = 'MyLogger') -> Logger :
+def getLogger(logPath: str =os.getcwd(), loggerName: str = 'main') -> Logger :
     """_summary_
         Logger 생성하여 반환하는 함수 설정
     Args:
@@ -86,8 +108,30 @@ def getLogger(logPath: str ='./', loggerName: str = 'MyLogger') -> Logger :
     return logger
 
 
+def checkLogger(logger: Logger | None, loggerName: str = 'main'):
+    """_summary_
+        혹시나 Logger가 없으면 만들어서 반환해주는 함수.
+    Args:
+        logger (Logger | None): _description_
 
-def read_file(filePath: str, logger: Logger, lazy_load: bool =False):
+    Returns:
+        _type_: _description_
+    """
+    if type(logger) is Logger:
+        pass
+    else:
+        logger = getLogger()
+    return logger
+
+def read_file(filePath: str, logger: Logger | None = None):
+    logger = checkLogger(logger=logger)   
+      
+
+@getTimer
+def read_file_lazymode(filePath: str, logger: Logger | None = None):
+    
+    func_name = read_file_lazymode.__name__
+    logger.info(f'{func_name} 실행 : {filePath=}')
     with open(file=filePath) as file_to_read:
         for line in file_to_read.readlines():
             yield line
